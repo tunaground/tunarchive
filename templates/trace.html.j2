@@ -1,0 +1,147 @@
+{% extends "layout.html.j2" %}
+{% block title -%}
+    {{ title }}
+{%- endblock %}
+{% block style -%}
+    <style>
+        @font-face {
+            font-family: "Saitamaar";
+            src: url("https://da1eth.github.io/AA/HeadKasen.woff2") format("woff2"),
+            url("https://da1eth.github.io/AA/HeadKasen.ttf") format("ttf");
+            font-display: swap;
+        }
+
+        @font-face {
+            font-family: "Saitamaar";
+            src: url(https://cdn.jsdelivr.net/fontsource/fonts/nanum-gothic-coding@latest/korean-400-normal.woff2) format('woff2'),
+            url(https://cdn.jsdelivr.net/fontsource/fonts/nanum-gothic-coding@latest/korean-400-normal.woff) format('woff');
+            font-display: swap;
+            unicode-range: U+AC00-D7A3, U+3130-318F;
+        }
+
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            background-color: rgb(240, 240, 240);
+        }
+
+        img {
+            max-height: 10em;
+        }
+
+        img:hover {
+            max-width: 100%;
+            max-height: 50em;
+        }
+
+        .thread {
+            padding-bottom: 0.4em;
+        }
+
+        .thread_header {
+            background-color: black;
+            color: white;
+            padding: 1em;
+        }
+
+        .thread_title {
+            font-size: 2em;
+            font-weight: bold;
+        }
+
+        .response_list {
+            margin: 0;
+            padding: 0;
+        }
+
+        .response {
+            background-color: rgba(255, 255, 255, 0.7);
+            list-style: none;
+            margin: 0.6em;
+            border: solid 1px black;
+        }
+
+        .response_header {
+            padding: 0.4em;
+            border-bottom: dashed 1px black;
+            background-color: rgba(0, 0, 0, 0.2);
+        }
+
+        .response_body {
+            padding: 0.4em;
+            font-size: 0.9em;
+            overflow-wrap: break-word;
+        }
+
+        .mona {
+            white-space: nowrap;
+            overflow-x: auto;
+            overflow-y: hidden;
+            font-family: 'Saitamaar', sans-serif;
+            line-height: 1.125em;
+            background-color: rgb(255, 255, 255);
+        }
+
+        span.spoiler {
+            color: rgba(0, 0, 0, 0);
+        }
+
+        span.spoiler::selection {
+            color: white;
+            background-color: black;
+        }
+    </style>
+{%- endblock %}
+{% block script %}
+    <script>
+        function applyLink(el) {
+            el.innerHTML = el.innerHTML.replace(
+                /https?:\/\/((?!www\.youtube\.com\/embed\/|bbs.tunaground.net)(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b[-a-zA-Z0-9가-힣()@:%_\+;.~#?&//=]*)/g,
+                (match) => `<a href="${match}" target="_blank">${match}</a>`
+            )
+        }
+
+        function applyAnchor(el) {
+            el.innerHTML = el.innerHTML.replace(
+                /([a-z]*)&gt;([0-9]*)&gt;([0-9]*)-?([0-9]*)/gm,
+                function (match, boardId, threadId, responseStart, responseEnd) {
+                    if (boardId === '' && threadId === '' && responseStart === '') {
+                        return match;
+                    }
+                    boardId = (boardId === '') ? "{{ board_id }}" : boardId;
+                    threadId = (threadId === '') ? "{{ thread_id }}" : threadId;
+                    const inPageAnchor = `response_${boardId}_${threadId}_${responseStart}`;
+                    if (document.getElementById(inPageAnchor)) {
+                        return `<a href="#${inPageAnchor}">${match}</a>`;
+                    } else {
+                        return `<a href="/${boardId}/${threadId}/index.html#response_${boardId}_${threadId}_${responseStart}">${match}</a>`;
+                    }
+                }
+            )
+        }
+
+        function fixBr(el) {
+            el.innerHTML = el.innerHTML.replace(/<br\s*\/?>/g, '\n<br>')
+        }
+
+        function updateLink(el) {
+            el.innerHTML = el.innerHTML.replace(
+                /https?:\/\/bbs.tunaground.net\/trace.php\/([a-z]+)\/([0-9]+)\/?(\S*)/g,
+                (match, boardId, threadId, start) => {
+                    return `<a href="/${boardId}/${threadId}/index.html#${start}" target="_blank">${match}</a>`
+                }
+            )
+        }
+
+        const contents = document.getElementsByClassName('response_body');
+        Array.prototype.forEach.call(contents, (el) => {
+            fixBr(el)
+            applyAnchor(el)
+            updateLink(el)
+            applyLink(el)
+        });
+    </script>
+{%- endblock %}
+{% block body -%}
+    {{ thread }}
+{%- endblock %}

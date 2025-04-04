@@ -1,0 +1,122 @@
+{% extends "layout.html.j2" %}
+{% block title -%}
+    {{ title }}
+{%- endblock %}
+{% block style -%}
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 0;
+            background-color: rgb(240,240,240);
+        }
+
+        nav {
+            padding: 0.5em 1em;
+            background-color: black;
+        }
+
+        .search_container {
+            display: flex;
+        }
+
+        .search {
+            font-size: 1em;
+            margin: 0.5em;
+            flex-grow: 1;
+        }
+
+        ul {
+            margin: 0.7em 0.5em;
+            padding: 0;
+            display: flex;
+        }
+
+        li {
+            list-style: none;
+        }
+
+        .thread_id {
+            min-width: 6em;
+        }
+
+        .thread_username {
+            margin-right: 1em;
+        }
+
+        .thread_username {
+            margin-left: auto;
+            margin-right: 0;
+        }
+
+        @media (max-width: 768px) {
+            .thread_id {
+                display: none;
+            }
+        }
+    </style>
+{% endblock %}
+{% block script %}
+    <script>
+        const threads={{ threads }}
+
+        const search = document.getElementById('search');
+
+        function populateList(data) {
+            const threadList = document.getElementById('thread_list');
+
+            threadList.innerHTML = '';
+
+            data.forEach(item => {
+                const itemDiv = document.createElement('div')
+                const summaryUl = document.createElement('ul')
+                const threadId = document.createElement('li')
+                const threadTitle = document.createElement('li')
+                const threadUsername = document.createElement('li')
+                const titleLink = document.createElement('a');
+
+                threadId.classList.add('thread_id')
+                threadTitle.classList.add('thread_title')
+                threadUsername.classList.add('thread_username')
+
+                titleLink.href = item.threadId + '/index.html'
+                titleLink.textContent = item.title
+                titleLink.target = '_blank'
+
+                threadId.innerHTML = item.threadId
+                threadTitle.appendChild(titleLink)
+                threadUsername.innerHTML = item.username
+
+                summaryUl.appendChild(threadId)
+                summaryUl.appendChild(threadTitle)
+                summaryUl.appendChild(threadUsername)
+
+                itemDiv.appendChild(summaryUl);
+
+                threadList.appendChild(itemDiv)
+            });
+        }
+
+        function filterData(query, threads) {
+            const filteredData = threads.filter(item => {
+                return item.title.toLowerCase().includes(query.toLowerCase()) ||
+                    item.username.toLowerCase().includes(query.toLowerCase());
+            });
+            populateList(filteredData);
+        }
+
+        populateList(threads)
+
+        search.addEventListener('input', function() {
+            filterData(search.value, threads)
+        })
+    </script>
+{% endblock %}
+{% block body -%}
+    <nav>
+    <a href="../index.html"><- 돌아가기</a>
+    </nav>
+    <div class="search_container">
+    <input type="text" class="search" id="search"/>
+    </div>
+    <div id="thread_list"></div>
+{%- endblock %}
