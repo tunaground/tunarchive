@@ -111,16 +111,6 @@ def build_trace(board_data_dir, board_dist_dir):
                 shutil.copy(image_src, image_dst)
 
 
-def draw_thread_summary(summary):
-    tmpl = env.get_template('thread_summary.html.j2')
-
-    return tmpl.render(
-        id=summary['threadId'],
-        title=summary['title'],
-        username=summary['username'],
-    )
-
-
 def filter_index(index):
     filtered_data = []
     for item in index:
