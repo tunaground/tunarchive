@@ -132,7 +132,13 @@
                 }
             )
             el.innerHTML = el.innerHTML.replace(
-                /https?:\/\/tunaground\.co\/cardpost\/trace\.php\?bbs=([a-z]+)&amp;card_number=([0-9]+)(\S*)/g,
+                /https?:\/\/tunaground\.co\/card2?post\/trace.php\/([a-z]+)\/([0-9]+)\/?(\S*)/g,
+                (match, boardId, threadId, start) => {
+                    return `<a href="/${boardId}/${threadId}/index.html#${start}" target="_blank">${match}</a>`
+                }
+            )
+            el.innerHTML = el.innerHTML.replace(
+                /https?:\/\/tunaground\.co\/card2?post\/trace\.php\?bbs=([a-z]+)&amp;card_number=([0-9]+)(\S*)/g,
                 (match, boardId, threadId) => {
                     console.log(match)
                     return `<a href="/${boardId}/${threadId}/index.html" target="_blank">${match}</a>`
