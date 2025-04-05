@@ -1,3 +1,4 @@
+from datetime import datetime
 from jinja2 import Environment, FileSystemLoader
 from tqdm import tqdm
 import argparse
@@ -5,6 +6,9 @@ import re
 import os
 import json
 import shutil
+import locale
+
+locale.setlocale(locale.LC_TIME, 'ko_KR.UTF-8')
 
 env = Environment(loader=FileSystemLoader('templates'))
 
@@ -29,12 +33,14 @@ def draw_image(attachment):
 def draw_response(board_id, thread_id, response):
     tmpl = env.get_template('response.html.j2')
 
+    date=datetime.strptime(response['createdAt'], '%Y-%m-%dT%H:%M:%S.000Z')
+
     return tmpl.render(
         response_id=f'response_{board_id}_{thread_id}_{response['sequence']}',
         sequence=response['sequence'],
         username=response['username'],
         user_id=response['userId'],
-        created_at=response['createdAt'],
+        created_at=date.strftime("%Y-%m-%d (%a) %H:%M:%S"),
         youtube=draw_youtube(response['youtube']),
         image=draw_image(response['attachment']),
         content=response['content']
@@ -53,14 +59,17 @@ def draw_responses(board_id, thread_id, responses):
 def draw_thread(thread):
     tmpl = env.get_template('thread.html.j2')
 
+    create_date = datetime.strptime(thread['createdAt'], '%Y-%m-%dT%H:%M:%S.000Z')
+    update_date = datetime.strptime(thread['updatedAt'], '%Y-%m-%dT%H:%M:%S.000Z')
+
     return tmpl.render(
         board_id=thread['boardId'],
         id=thread['threadId'],
         title=thread['title'],
         size=thread['size'],
         username=thread['username'],
-        created_at=thread['createdAt'],
-        updated_at=thread['updatedAt'],
+        created_at=create_date.strftime("%Y-%m-%d (%a) %H:%M:%S"),
+        updated_at=update_date.strftime("%Y-%m-%d (%a) %H:%M:%S"),
         responses=draw_responses(
             thread['boardId'],
             thread['threadId'],
