@@ -7,7 +7,7 @@
         body {
             font-family: sans-serif;
             margin: 0;
-            background-color: rgb(240,240,240);
+            background-color: rgb(240, 240, 240);
         }
 
         nav {
@@ -23,6 +23,15 @@
             font-size: 1em;
             margin: 0.5em;
             flex-grow: 1;
+        }
+
+        .pagination {
+            margin: 0.5em;
+            line-height: 1.5em;
+        }
+
+        .btn_pg {
+            margin: 0.2em;
         }
 
         ul {
@@ -57,9 +66,37 @@
 {% endblock %}
 {% block script %}
     <script>
-        const threads={{ threads }}
+        const threads = {{ threads }}
 
-        const search = document.getElementById('search');
+        function filterData(query, threads) {
+            return threads.filter(item => {
+                return item.title.toLowerCase().includes(query.toLowerCase()) ||
+                    item.username.toLowerCase().includes(query.toLowerCase());
+            });
+            {#populateList(filteredData);#}
+        }
+
+        function paginateThreads(threads) {
+            const paginated = [];
+            for (let i = 0; i < threads.length; i += 100) {
+                paginated.push(threads.slice(i, i + 100));
+            }
+            return paginated
+        }
+
+        function getPageThread(paginated, pageNumber) {
+            const totalPages = paginated.length;
+            if (pageNumber < 1 || pageNumber > totalPages) {
+                return [];
+            }
+            return paginated[pageNumber - 1];
+        }
+
+        function getPageNumberFromURL() {
+            const params = new URLSearchParams(window.location.search);
+            const page = params.get('page');
+            return page ? parseInt(page, 10) : 1;
+        }
 
         function populateList(data) {
             const threadList = document.getElementById('thread_list');
@@ -96,27 +133,53 @@
             });
         }
 
-        function filterData(query, threads) {
-            const filteredData = threads.filter(item => {
-                return item.title.toLowerCase().includes(query.toLowerCase()) ||
-                    item.username.toLowerCase().includes(query.toLowerCase());
-            });
-            populateList(filteredData);
+        function generatePaginationLinks(paginated, currentPage) {
+            const paginationContainer = document.getElementById("pagination")
+
+            const totalPages = paginated.length;
+            let paginationHTML = '';
+
+            if (currentPage > 1) {
+                paginationHTML += `<a class="btn_pg" href="?page=${currentPage - 1}">이전</a> `;
+            }
+
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === currentPage) {
+                    paginationHTML += `<span class="btn_pg">${i}</span> `;
+                } else {
+                    paginationHTML += `<a class="btn_pg" href="?page=${i}">${i}</a> `;
+                }
+            }
+
+            if (currentPage < totalPages) {
+                paginationHTML += `<a class="btn_pg" href="?page=${currentPage + 1}">다음</a>`;
+            }
+
+            paginationContainer.innerHTML = paginationHTML
         }
 
-        populateList(threads)
+        const search = document.getElementById('search');
 
-        search.addEventListener('input', function() {
-            filterData(search.value, threads)
+        const currentPage = getPageNumberFromURL()
+        const paginated = paginateThreads(threads)
+
+        populateList(getPageThread(paginated, currentPage))
+        generatePaginationLinks(paginated, currentPage)
+
+        search.addEventListener('input', function () {
+            const paginated = paginateThreads(filterData(search.value, threads))
+            populateList(getPageThread(paginated, currentPage))
+            generatePaginationLinks(paginated, currentPage)
         })
     </script>
 {% endblock %}
 {% block body -%}
     <nav>
-    <a href="../index.html"><- 돌아가기</a>
+        <a href="../index.html"><- 돌아가기</a>
     </nav>
     <div class="search_container">
-    <input type="text" class="search" id="search"/>
+        <input type="text" class="search" id="search"/>
     </div>
+    <div class="pagination" id="pagination"></div>
     <div id="thread_list"></div>
 {%- endblock %}
