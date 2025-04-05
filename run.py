@@ -84,12 +84,15 @@ def build_trace(board_data_dir, board_dist_dir):
     tf_pattern = r'^\d+\.json$'
 
     json_files = [f for f in os.listdir(board_data_dir) if re.match(tf_pattern, f)]
+    json_files.sort()
+    progress = tqdm(json_files)
 
-    for json_file in tqdm(json_files, desc='Building Trace Page'):
+    for json_file in progress:
         src_file = os.path.join(board_data_dir, json_file)
 
         with open(src_file, 'r', encoding='utf-8') as sf:
             thread = json.load(sf)
+            progress.set_postfix(thread=str(thread['threadId']))
             page = draw_trace(thread)
 
             dst_dir = os.path.join(board_dist_dir, str(thread['threadId']))

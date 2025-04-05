@@ -96,7 +96,7 @@
     <script>
         function applyLink(el) {
             el.innerHTML = el.innerHTML.replace(
-                /https?:\/\/((?!www\.youtube\.com\/embed\/|bbs.tunaground.net)(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b[-a-zA-Z0-9가-힣()@:%_\+;.~#?&//=]*)/g,
+                /https?:\/\/((?!www\.youtube\.com\/embed\/|bbs.tunaground.net|tunaground.co)(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b[-a-zA-Z0-9가-힣()@:%_\+;.~#?&//=]*)/g,
                 (match) => `<a href="${match}" target="_blank">${match}</a>`
             )
         }
@@ -129,6 +129,13 @@
                 /https?:\/\/bbs.tunaground.net\/trace.php\/([a-z]+)\/([0-9]+)\/?(\S*)/g,
                 (match, boardId, threadId, start) => {
                     return `<a href="/${boardId}/${threadId}/index.html#${start}" target="_blank">${match}</a>`
+                }
+            )
+            el.innerHTML = el.innerHTML.replace(
+                /https?:\/\/tunaground\.co\/cardpost\/trace\.php\?bbs=([a-z]+)&amp;card_number=([0-9]+)(\S*)/g,
+                (match, boardId, threadId) => {
+                    console.log(match)
+                    return `<a href="/${boardId}/${threadId}/index.html" target="_blank">${match}</a>`
                 }
             )
         }
