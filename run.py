@@ -36,7 +36,7 @@ def draw_response(board_id, thread_id, response):
     date=datetime.strptime(response['createdAt'], '%Y-%m-%dT%H:%M:%S.000Z')
 
     return tmpl.render(
-        response_id=f'response_{board_id}_{thread_id}_{response['sequence']}',
+        response_id=f'response_{board_id}_{thread_id}_{response["sequence"]}',
         sequence=response['sequence'],
         username=response['username'],
         user_id=response['userId'],
