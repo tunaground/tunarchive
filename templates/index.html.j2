@@ -73,7 +73,6 @@
                 return item.title.toLowerCase().includes(query.toLowerCase()) ||
                     item.username.toLowerCase().includes(query.toLowerCase());
             });
-            {#populateList(filteredData);#}
         }
 
         function paginateThreads(threads) {
@@ -96,6 +95,26 @@
             const params = new URLSearchParams(window.location.search);
             const page = params.get('page');
             return page ? parseInt(page, 10) : 1;
+        }
+
+        function setPageNumberToURL(value) {
+            const url = new URL(window.location);
+            const params = new URLSearchParams(url.search);
+            params.set('page', value);
+            window.history.replaceState({}, '', `${url.pathname}?${params.toString()}`);
+        }
+
+        function getKeywordFromURL() {
+            const params = new URLSearchParams(window.location.search);
+            const keyword = params.get('keyword');
+            return keyword ? keyword : '';
+        }
+
+        function setKeywordToURL(value) {
+            const url = new URL(window.location);
+            const params = new URLSearchParams(url.search);
+            params.set('keyword', value);
+            window.history.replaceState({}, '', `${url.pathname}?${params.toString()}`);
         }
 
         function populateList(data) {
@@ -133,43 +152,44 @@
             });
         }
 
-        function generatePaginationLinks(paginated, currentPage) {
+        function generatePaginationLinks(paginated, page, keyword) {
             const paginationContainer = document.getElementById("pagination")
 
             const totalPages = paginated.length;
             let paginationHTML = '';
 
-            if (currentPage > 1) {
-                paginationHTML += `<a class="btn_pg" href="?page=${currentPage - 1}">이전</a> `;
+            if (page > 1) {
+                paginationHTML += `<a class="btn_pg" href="?keyword=${keyword}&page=${page - 1}">이전</a> `;
             }
 
             for (let i = 1; i <= totalPages; i++) {
-                if (i === currentPage) {
+                if (i === page) {
                     paginationHTML += `<span class="btn_pg">${i}</span> `;
                 } else {
-                    paginationHTML += `<a class="btn_pg" href="?page=${i}">${i}</a> `;
+                    paginationHTML += `<a class="btn_pg" href="?keyword=${keyword}&page=${i}">${i}</a> `;
                 }
             }
 
-            if (currentPage < totalPages) {
-                paginationHTML += `<a class="btn_pg" href="?page=${currentPage + 1}">다음</a>`;
+            if (page < totalPages) {
+                paginationHTML += `<a class="btn_pg" href="?keyword=${keyword}&page=${page + 1}">다음</a>`;
             }
 
             paginationContainer.innerHTML = paginationHTML
         }
 
         const search = document.getElementById('search');
+        search.value = getKeywordFromURL()
+        const paginated = paginateThreads(filterData(search.value, threads))
 
-        const currentPage = getPageNumberFromURL()
-        const paginated = paginateThreads(threads)
-
-        populateList(getPageThread(paginated, currentPage))
-        generatePaginationLinks(paginated, currentPage)
+        populateList(getPageThread(paginated, getPageNumberFromURL(), getKeywordFromURL()))
+        generatePaginationLinks(paginated, getPageNumberFromURL(), getKeywordFromURL())
 
         search.addEventListener('input', function () {
+            setKeywordToURL(search.value)
             const paginated = paginateThreads(filterData(search.value, threads))
-            populateList(getPageThread(paginated, currentPage))
-            generatePaginationLinks(paginated, currentPage)
+            setPageNumberToURL(1)
+            populateList(getPageThread(paginated, getPageNumberFromURL(), getKeywordFromURL()))
+            generatePaginationLinks(paginated, getPageNumberFromURL(), getKeywordFromURL())
         })
     </script>
 {% endblock %}
