@@ -1,3 +1,8 @@
+cached-property==2.0.1
+charset-normalizer==3.4.1
 Jinja2==3.1.6
 MarkupSafe==3.0.2
+minify_html==0.16.4
+python-datauri==3.0.2
 tqdm==4.67.1
+typing_extensions==4.13.1
