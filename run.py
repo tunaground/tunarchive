@@ -1,12 +1,14 @@
 from datetime import datetime
 from jinja2 import Environment, FileSystemLoader
 from tqdm import tqdm
+from datauri import DataURI
 import argparse
 import re
 import os
 import json
 import shutil
 import locale
+import minify_html
 
 locale.setlocale(locale.LC_TIME, 'ko_KR.UTF-8')
 
@@ -22,18 +24,24 @@ def draw_youtube(link):
     return ''
 
 
-def draw_image(attachment):
+def draw_image(attachment, data_uri=True, board_id=''):
+    src_dir = f'data/{board_id}/data'
+    target_dir = 'image'
     tmpl = env.get_template('image.html.j2')
 
     if attachment != '':
-        return tmpl.render(filename=attachment)
+        if data_uri and board_id != '':
+            data = DataURI.from_file(f'{src_dir}/{attachment}')
+            return tmpl.render(filename=str(data))
+        else:
+            return tmpl.render(filename=f'{target_dir}/{attachment}')
     return ''
 
 
-def draw_response(board_id, thread_id, response):
+def draw_response(board_id, thread_id, response, data_uri=True):
     tmpl = env.get_template('response.html.j2')
 
-    date=datetime.strptime(response['createdAt'], '%Y-%m-%dT%H:%M:%S.000Z')
+    date = datetime.strptime(response['createdAt'], '%Y-%m-%dT%H:%M:%S.000Z')
 
     return tmpl.render(
         response_id=f'response_{board_id}_{thread_id}_{response["sequence"]}',
@@ -42,21 +50,21 @@ def draw_response(board_id, thread_id, response):
         user_id=response['userId'],
         created_at=date.strftime("%Y-%m-%d (%a) %H:%M:%S"),
         youtube=draw_youtube(response['youtube']),
-        image=draw_image(response['attachment']),
+        image=draw_image(response['attachment'], data_uri, board_id),
         content=response['content']
     )
 
 
-def draw_responses(board_id, thread_id, responses):
+def draw_responses(board_id, thread_id, responses, data_uri=True):
     section = []
 
     for response in responses:
-        section.append(draw_response(board_id, thread_id, response))
+        section.append(draw_response(board_id, thread_id, response, data_uri))
 
     return '\n'.join(section)
 
 
-def draw_thread(thread):
+def draw_thread(thread, data_uri=True):
     tmpl = env.get_template('thread.html.j2')
 
     create_date = datetime.strptime(thread['createdAt'], '%Y-%m-%dT%H:%M:%S.000Z')
@@ -73,23 +81,24 @@ def draw_thread(thread):
         responses=draw_responses(
             thread['boardId'],
             thread['threadId'],
-            thread['responses']
+            thread['responses'],
+            data_uri
         )
     )
 
 
-def draw_trace(thread):
+def draw_trace(thread, data_uri=True):
     tmpl = env.get_template('trace.html.j2')
 
     return tmpl.render(
         title=thread['title'],
-        thread=draw_thread(thread),
+        thread=draw_thread(thread, data_uri),
         board_id=thread['boardId'],
         thread_id=thread['threadId'],
     )
 
 
-def build_trace(board_data_dir, board_dist_dir):
+def build_trace(board_data_dir, board_dist_dir, data_uri=True):
     tf_pattern = r'^\d+\.json$'
 
     json_files = [f for f in os.listdir(board_data_dir) if re.match(tf_pattern, f)]
@@ -102,25 +111,29 @@ def build_trace(board_data_dir, board_dist_dir):
         with open(src_file, 'r', encoding='utf-8') as sf:
             thread = json.load(sf)
             progress.set_postfix(thread=str(thread['threadId']))
-            page = draw_trace(thread)
+            page = draw_trace(thread, data_uri)
 
-            dst_dir = os.path.join(board_dist_dir, str(thread['threadId']))
-            if not os.path.exists(dst_dir):
-                os.makedirs(dst_dir)
+            if data_uri:
+                dst_file = os.path.join(board_dist_dir, f'{thread["threadId"]}.html')
+            else:
+                dst_dir = os.path.join(board_dist_dir, str(thread['threadId']))
+                if not os.path.exists(dst_dir):
+                    os.makedirs(dst_dir)
 
-            dst_file = os.path.join(dst_dir, 'index.html')
+                dst_file = os.path.join(dst_dir, 'index.html')
             with open(dst_file, 'w', encoding='utf-8') as df:
-                df.write(page)
+                df.write(minify_html.minify(page, minify_css=True, remove_processing_instructions=True))
 
-            image_dir = os.path.join(board_dist_dir, str(thread['threadId']), 'image')
-            if not os.path.exists(image_dir):
-                os.makedirs(image_dir)
+            if not data_uri:
+                image_dir = os.path.join(board_dist_dir, str(thread['threadId']), 'image')
+                if not os.path.exists(image_dir):
+                    os.makedirs(image_dir)
 
-            images = [response['attachment'] for response in thread['responses'] if response['attachment'] != '']
-            for image in images:
-                image_src = os.path.join(board_data_dir, 'data', image)
-                image_dst = os.path.join(image_dir, image)
-                shutil.copy(image_src, image_dst)
+                images = [response['attachment'] for response in thread['responses'] if response['attachment'] != '']
+                for image in images:
+                    image_src = os.path.join(board_data_dir, 'data', image)
+                    image_dst = os.path.join(image_dir, image)
+                    shutil.copy(image_src, image_dst)
 
 
 def filter_index(index):
@@ -131,7 +144,7 @@ def filter_index(index):
     return json.dumps(filtered_data, ensure_ascii=False)
 
 
-def build_index(board_data_dir, board_dist_dir, board_id):
+def build_index(board_data_dir, board_dist_dir, board_id, data_uri):
     src_file = os.path.join(board_data_dir, 'index.json')
 
     with open(src_file, 'r', encoding='utf-8') as sf:
@@ -144,31 +157,35 @@ def build_index(board_data_dir, board_dist_dir, board_id):
         page = tmpl.render(
             title=board_id,
             threads=filter_index(index),
+            data_uri=data_uri,
         )
 
         dst_file = os.path.join(board_dist_dir, 'index.html')
         with open(dst_file, 'w', encoding='utf-8') as df:
-            df.write(page)
+            df.write(minify_html.minify(page, minify_css=True, remove_processing_instructions=True))
 
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('board_id', type=str)
+
     group = parser.add_mutually_exclusive_group(required=False)
     group.add_argument('--trace-only', action='store_true')
     group.add_argument('--index-only', action='store_true')
+
+    parser.add_argument('--data-uri', action='store_true')
     args = parser.parse_args()
 
     board_data_dir = f'./data/{args.board_id}'
     board_dist_dir = f'./dist/{args.board_id}'
 
     if args.trace_only:
-        build_trace(board_data_dir, board_dist_dir)
+        build_trace(board_data_dir, board_dist_dir, args.data_uri)
     elif args.index_only:
-        build_index(board_data_dir, board_dist_dir, args.board_id)
+        build_index(board_data_dir, board_dist_dir, args.board_id, args.data_uri)
     else:
-        build_trace(board_data_dir, board_dist_dir)
-        build_index(board_data_dir, board_dist_dir, args.board_id)
+        build_index(board_data_dir, board_dist_dir, args.board_id, args.data_uri)
+        build_trace(board_data_dir, board_dist_dir, args.data_uri)
 
 
 if __name__ == "__main__":

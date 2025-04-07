@@ -129,16 +129,26 @@
                 const threadTitle = document.createElement('li')
                 const threadUsername = document.createElement('li')
                 const titleLink = document.createElement('a');
+                const downloadLink = document.createElement('a');
 
                 threadId.classList.add('thread_id')
                 threadTitle.classList.add('thread_title')
                 threadUsername.classList.add('thread_username')
 
-                titleLink.href = item.threadId + '/index.html'
+                {% if data_uri -%}
+                    titleLink.href = item.threadId + '.html'
+                    downloadLink.href = item.threadId + '.html'
+                    downloadLink.download = item.threadId + '-' + item.title + '.html'
+                    downloadLink.textContent = '(다운로드)'
+                {%- else -%}
+                    titleLink.href = item.threadId + '/index.html'
+                {%- endif %}
                 titleLink.textContent = item.title
                 titleLink.target = '_blank'
 
                 threadId.innerHTML = item.threadId
+                threadTitle.appendChild(downloadLink)
+                threadTitle.appendChild(document.createTextNode(' '))
                 threadTitle.appendChild(titleLink)
                 threadUsername.innerHTML = item.username
 
@@ -195,7 +205,7 @@
 {% endblock %}
 {% block body -%}
     <nav>
-        <a href="../index.html"><- 돌아가기</a>
+        <a href="../index.html">&lt;- 돌아가기</a>
     </nav>
     <div class="search_container">
         <input type="text" class="search" id="search"/>
