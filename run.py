@@ -177,6 +177,9 @@ def main():
     group.add_argument('--trace-only', action='store_true')
     group.add_argument('--index-only', action='store_true')
 
+    parser.add_argument('--data-dir', type=str, default='data')
+    parser.add_argument('--dist-dir', type=str, default='dist')
+
     parser.add_argument('--data-uri', action='store_true')
     parser.add_argument('--body-aa', action='store_true')
 
@@ -186,8 +189,8 @@ def main():
     if not args.windows:
         locale.setlocale(locale.LC_TIME, 'ko_KR.UTF-8')
 
-    board_data_dir = Path('.', 'data', args.board_id)
-    board_dist_dir = Path('.', 'dist', args.board_id)
+    board_data_dir = Path('.', args.data_dir, args.board_id)
+    board_dist_dir = Path('.', args.dist_dir, args.board_id)
 
     if args.trace_only:
         build_trace(board_data_dir, board_dist_dir, args.data_uri, args.body_aa)
