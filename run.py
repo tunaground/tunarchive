@@ -2,6 +2,7 @@ from datetime import datetime
 from jinja2 import Environment, FileSystemLoader
 from tqdm import tqdm
 from datauri import DataURI
+from zoneinfo import ZoneInfo
 import argparse
 import re
 import os
@@ -41,6 +42,7 @@ def draw_response(board_id, thread_id, response, data_uri=True):
     tmpl = env.get_template('response.html.j2')
 
     date = datetime.strptime(response['createdAt'], '%Y-%m-%dT%H:%M:%S.000Z')
+    date = date.replace(tzinfo=ZoneInfo('UTC')).astimezone(ZoneInfo('Asia/Seoul'))
 
     return tmpl.render(
         response_id=f'response_{board_id}_{thread_id}_{response["sequence"]}',
@@ -67,7 +69,9 @@ def draw_thread(thread, data_uri=True):
     tmpl = env.get_template('thread.html.j2')
 
     create_date = datetime.strptime(thread['createdAt'], '%Y-%m-%dT%H:%M:%S.000Z')
+    create_date = create_date.replace(tzinfo=ZoneInfo('Asia/Seoul')).astimezone(ZoneInfo('Asia/Seoul'))
     update_date = datetime.strptime(thread['updatedAt'], '%Y-%m-%dT%H:%M:%S.000Z')
+    update_date = update_date.replace(tzinfo=ZoneInfo('Asia/Seoul')).astimezone(ZoneInfo('Asia/Seoul'))
 
     return tmpl.render(
         board_id=thread['boardId'],
@@ -86,7 +90,7 @@ def draw_thread(thread, data_uri=True):
     )
 
 
-def draw_trace(thread, data_uri=True):
+def draw_trace(thread, data_uri=True, body_aa=False):
     tmpl = env.get_template('trace.html.j2')
 
     return tmpl.render(
@@ -94,10 +98,11 @@ def draw_trace(thread, data_uri=True):
         thread=draw_thread(thread, data_uri),
         board_id=thread['boardId'],
         thread_id=thread['threadId'],
+        body_aa=body_aa
     )
 
 
-def build_trace(board_data_dir, board_dist_dir, data_uri=True):
+def build_trace(board_data_dir, board_dist_dir, data_uri=True, body_aa=False):
     tf_pattern = r'^\d+\.json$'
 
     json_files = [f for f in os.listdir(board_data_dir) if re.match(tf_pattern, f)]
@@ -110,7 +115,7 @@ def build_trace(board_data_dir, board_dist_dir, data_uri=True):
         with open(src_file, 'r', encoding='utf-8') as sf:
             thread = json.load(sf)
             progress.set_postfix(thread=str(thread['threadId']))
-            page = draw_trace(thread, data_uri)
+            page = draw_trace(thread, data_uri, body_aa)
 
             if data_uri:
                 dst_file = Path(board_dist_dir, f'{thread["threadId"]}.html')
@@ -173,6 +178,7 @@ def main():
     group.add_argument('--index-only', action='store_true')
 
     parser.add_argument('--data-uri', action='store_true')
+    parser.add_argument('--body-aa', action='store_true')
 
     parser.add_argument('--windows', action='store_true')
     args = parser.parse_args()
@@ -184,12 +190,12 @@ def main():
     board_dist_dir = Path('.', 'dist', args.board_id)
 
     if args.trace_only:
-        build_trace(board_data_dir, board_dist_dir, args.data_uri)
+        build_trace(board_data_dir, board_dist_dir, args.data_uri, args.body_aa)
     elif args.index_only:
         build_index(board_data_dir, board_dist_dir, args.board_id, args.data_uri)
     else:
         build_index(board_data_dir, board_dist_dir, args.board_id, args.data_uri)
-        build_trace(board_data_dir, board_dist_dir, args.data_uri)
+        build_trace(board_data_dir, board_dist_dir, args.data_uri, args.body_aa)
 
 
 if __name__ == "__main__":

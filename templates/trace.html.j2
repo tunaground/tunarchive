@@ -76,6 +76,10 @@
             padding: 0.4em;
             font-size: 0.9em;
             overflow-wrap: break-word;
+            {% if body_aa -%}
+            font-family: 'Saitamaar', sans-serif;
+            line-height: 1.125em;
+            {%- endif %}
         }
 
         .mona {
