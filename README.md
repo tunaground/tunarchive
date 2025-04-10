@@ -9,6 +9,9 @@
 
 ## 사용법
 
+> [!WARNING]
+> Windows 사용시 `--windows` 옵션을 붙여야 Surrogates 관련 오류가 발생하지 않는다.
+
 우선 프로젝트 루트 아래에 `data` 디렉토리를 생성한 뒤 Lightuna 원본 데이터를 옮겨넣는다.
 
 디렉토리/파일 구조는 다음과 같은 형태로 나온다.
@@ -58,6 +61,25 @@ python3 run.py BOARD_ID --index-only
 > ex) `python3 run.py situplay`
 
 빌드 결과물은 `dist/` 디렉토리 하위에 생성된다.
+
+### Data URI
+
+`--data-uri` 옵션을 사용하면 빌드 과정에서 첨부파일을 Data URI로 변환하여 html 파일을 발행한다.
+
+이 경우 별도의 첨부파일 디렉토리를 필요로 하지 않으므로 파일 생성 경로가 달라진다.
+
+```bash
+# 기본
+python3 run.py BOARD_ID
+# 결과물
+dist/tuna/1111111111/index.html
+dist/tuna/1111111111/data/some-image.png
+
+# Data URI 활성화
+python3 run.py BOARD_ID --data-uri
+# 결과물
+dist/tuna/1111111111.html
+```
 
 ### 데이터 조작
 

@@ -9,8 +9,7 @@ import json
 import shutil
 import locale
 import minify_html
-
-locale.setlocale(locale.LC_TIME, 'ko_KR.UTF-8')
+from pathlib import Path
 
 env = Environment(loader=FileSystemLoader('templates'))
 
@@ -25,16 +24,16 @@ def draw_youtube(link):
 
 
 def draw_image(attachment, data_uri=True, board_id=''):
-    src_dir = f'data/{board_id}/data'
+    src_dir = Path('data', board_id, 'data')
     target_dir = 'image'
     tmpl = env.get_template('image.html.j2')
 
     if attachment != '':
         if data_uri and board_id != '':
-            data = DataURI.from_file(f'{src_dir}/{attachment}')
+            data = DataURI.from_file(Path(src_dir, attachment))
             return tmpl.render(filename=str(data))
         else:
-            return tmpl.render(filename=f'{target_dir}/{attachment}')
+            return tmpl.render(filename=Path(target_dir, attachment))
     return ''
 
 
@@ -106,7 +105,7 @@ def build_trace(board_data_dir, board_dist_dir, data_uri=True):
     progress = tqdm(json_files)
 
     for json_file in progress:
-        src_file = os.path.join(board_data_dir, json_file)
+        src_file = Path(board_data_dir, json_file)
 
         with open(src_file, 'r', encoding='utf-8') as sf:
             thread = json.load(sf)
@@ -114,25 +113,25 @@ def build_trace(board_data_dir, board_dist_dir, data_uri=True):
             page = draw_trace(thread, data_uri)
 
             if data_uri:
-                dst_file = os.path.join(board_dist_dir, f'{thread["threadId"]}.html')
+                dst_file = Path(board_dist_dir, f'{thread["threadId"]}.html')
             else:
-                dst_dir = os.path.join(board_dist_dir, str(thread['threadId']))
+                dst_dir = Path(board_dist_dir, str(thread['threadId']))
                 if not os.path.exists(dst_dir):
                     os.makedirs(dst_dir)
 
-                dst_file = os.path.join(dst_dir, 'index.html')
+                dst_file = Path(dst_dir, 'index.html')
             with open(dst_file, 'w', encoding='utf-8') as df:
                 df.write(minify_html.minify(page, minify_css=True, remove_processing_instructions=True))
 
             if not data_uri:
-                image_dir = os.path.join(board_dist_dir, str(thread['threadId']), 'image')
+                image_dir = Path(board_dist_dir, str(thread['threadId']), 'image')
                 if not os.path.exists(image_dir):
                     os.makedirs(image_dir)
 
                 images = [response['attachment'] for response in thread['responses'] if response['attachment'] != '']
                 for image in images:
-                    image_src = os.path.join(board_data_dir, 'data', image)
-                    image_dst = os.path.join(image_dir, image)
+                    image_src = Path(board_data_dir, 'data', image)
+                    image_dst = Path(image_dir, image)
                     shutil.copy(image_src, image_dst)
 
 
@@ -145,7 +144,7 @@ def filter_index(index):
 
 
 def build_index(board_data_dir, board_dist_dir, board_id, data_uri):
-    src_file = os.path.join(board_data_dir, 'index.json')
+    src_file = Path(board_data_dir, 'index.json')
 
     with open(src_file, 'r', encoding='utf-8') as sf:
         index = sorted(json.load(sf), key=lambda x: x['threadId'])
@@ -160,7 +159,7 @@ def build_index(board_data_dir, board_dist_dir, board_id, data_uri):
             data_uri=data_uri,
         )
 
-        dst_file = os.path.join(board_dist_dir, 'index.html')
+        dst_file = Path(board_dist_dir, 'index.html')
         with open(dst_file, 'w', encoding='utf-8') as df:
             df.write(minify_html.minify(page, minify_css=True, remove_processing_instructions=True))
 
@@ -174,10 +173,15 @@ def main():
     group.add_argument('--index-only', action='store_true')
 
     parser.add_argument('--data-uri', action='store_true')
+
+    parser.add_argument('--windows', action='store_true')
     args = parser.parse_args()
 
-    board_data_dir = f'./data/{args.board_id}'
-    board_dist_dir = f'./dist/{args.board_id}'
+    if not args.windows:
+        locale.setlocale(locale.LC_TIME, 'ko_KR.UTF-8')
+
+    board_data_dir = Path('.', 'data', args.board_id)
+    board_dist_dir = Path('.', 'dist', args.board_id)
 
     if args.trace_only:
         build_trace(board_data_dir, board_dist_dir, args.data_uri)
