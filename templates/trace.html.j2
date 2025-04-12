@@ -6,8 +6,8 @@
     <style>
         @font-face {
             font-family: "Saitamaar";
-            src: url("https://da1eth.github.io/AA/HeadKasen.woff2") format("woff2"),
-            url("https://da1eth.github.io/AA/HeadKasen.ttf") format("ttf");
+            src: url("https://tunaground.github.io/AA/HeadKasen.woff2") format("woff2"),
+            url("https://tunaground.github.io/AA/HeadKasen.ttf") format("ttf");
             font-display: swap;
         }
 
@@ -76,10 +76,10 @@
             padding: 0.4em;
             font-size: 0.9em;
             overflow-wrap: break-word;
-            {% if body_aa -%}
+        {% if body_aa -%}
             font-family: 'Saitamaar', sans-serif;
             line-height: 1.125em;
-            {%- endif %}
+        {%- endif %}
         }
 
         .mona {
@@ -123,7 +123,11 @@
                     if (document.getElementById(inPageAnchor)) {
                         return `<a href="#${inPageAnchor}">${match}</a>`;
                     } else {
-                        return `<a href="/${boardId}/${threadId}/index.html#response_${boardId}_${threadId}_${responseStart}">${match}</a>`;
+                        {% if data_uri -%}
+                            return `<a href="/${boardId}/${threadId}.html#response_${boardId}_${threadId}_${responseStart}">${match}</a>`;
+                        {%- else -%}
+                            return `<a href="/${boardId}/${threadId}/index.html#response_${boardId}_${threadId}_${responseStart}">${match}</a>`;
+                        {%- endif %}
                     }
                 }
             )
@@ -137,20 +141,31 @@
             el.innerHTML = el.innerHTML.replace(
                 /https?:\/\/bbs.tunaground.net\/trace.php\/([a-z]+)\/([0-9]+)\/?(\S*)/g,
                 (match, boardId, threadId, start) => {
-                    return `<a href="/${boardId}/${threadId}/index.html#${start}" target="_blank">${match}</a>`
+                    {% if data_uri -%}
+                        return `<a href="/${boardId}/${threadId}.html#${start}" target="_blank">${match}</a>`
+                    {%- else -%}
+                        return `<a href="/${boardId}/${threadId}/index.html#${start}" target="_blank">${match}</a>`
+                    {%- endif %}
                 }
             )
             el.innerHTML = el.innerHTML.replace(
                 /https?:\/\/tunaground\.co\/card2?post\/trace.php\/([a-z]+)\/([0-9]+)\/?(\S*)/g,
                 (match, boardId, threadId, start) => {
-                    return `<a href="/${boardId}/${threadId}/index.html#${start}" target="_blank">${match}</a>`
+                    {% if data_uri -%}
+                        return `<a href="/${boardId}/${threadId}.html#${start}" target="_blank">${match}</a>`
+                    {%- else -%}
+                        return `<a href="/${boardId}/${threadId}/index.html#${start}" target="_blank">${match}</a>`
+                    {%- endif %}
                 }
             )
             el.innerHTML = el.innerHTML.replace(
                 /https?:\/\/tunaground\.co\/card2?post\/trace\.php\?bbs=([a-z]+)&amp;card_number=([0-9]+)(\S*)/g,
                 (match, boardId, threadId) => {
-                    console.log(match)
-                    return `<a href="/${boardId}/${threadId}/index.html" target="_blank">${match}</a>`
+                    {% if data_uri -%}
+                        return `<a href="/${boardId}/${threadId}.html" target="_blank">${match}</a>`
+                    {%- else -%}
+                        return `<a href="/${boardId}/${threadId}/index.html" target="_blank">${match}</a>`
+                    {%- endif %}
                 }
             )
         }

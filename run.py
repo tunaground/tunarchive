@@ -24,7 +24,7 @@ def draw_youtube(link):
     return ''
 
 
-def draw_image(attachment, data_uri=True, board_id=''):
+def draw_image(attachment, data_uri=False, board_id=''):
     src_dir = Path('data', board_id, 'data')
     target_dir = 'image'
     tmpl = env.get_template('image.html.j2')
@@ -38,7 +38,7 @@ def draw_image(attachment, data_uri=True, board_id=''):
     return ''
 
 
-def draw_response(board_id, thread_id, response, data_uri=True):
+def draw_response(board_id, thread_id, response, data_uri=False):
     tmpl = env.get_template('response.html.j2')
 
     date = datetime.strptime(response['createdAt'], '%Y-%m-%dT%H:%M:%S.000Z')
@@ -56,7 +56,7 @@ def draw_response(board_id, thread_id, response, data_uri=True):
     )
 
 
-def draw_responses(board_id, thread_id, responses, data_uri=True):
+def draw_responses(board_id, thread_id, responses, data_uri=False):
     section = []
 
     for response in responses:
@@ -65,7 +65,7 @@ def draw_responses(board_id, thread_id, responses, data_uri=True):
     return '\n'.join(section)
 
 
-def draw_thread(thread, data_uri=True):
+def draw_thread(thread, data_uri=False):
     tmpl = env.get_template('thread.html.j2')
 
     create_date = datetime.strptime(thread['createdAt'], '%Y-%m-%dT%H:%M:%S.000Z')
@@ -90,7 +90,7 @@ def draw_thread(thread, data_uri=True):
     )
 
 
-def draw_trace(thread, data_uri=True, body_aa=False):
+def draw_trace(thread, data_uri=False, body_aa=False):
     tmpl = env.get_template('trace.html.j2')
 
     return tmpl.render(
@@ -98,11 +98,12 @@ def draw_trace(thread, data_uri=True, body_aa=False):
         thread=draw_thread(thread, data_uri),
         board_id=thread['boardId'],
         thread_id=thread['threadId'],
-        body_aa=body_aa
+        body_aa=body_aa,
+        data_uri=data_uri
     )
 
 
-def build_trace(board_data_dir, board_dist_dir, data_uri=True, body_aa=False):
+def build_trace(board_data_dir, board_dist_dir, data_uri=False, body_aa=False):
     tf_pattern = r'^\d+\.json$'
 
     json_files = [f for f in os.listdir(board_data_dir) if re.match(tf_pattern, f)]
