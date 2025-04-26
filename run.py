@@ -1,3 +1,4 @@
+import html
 from datetime import datetime
 from jinja2 import Environment, FileSystemLoader
 from tqdm import tqdm
@@ -76,7 +77,7 @@ def draw_thread(thread, data_uri=False):
     return tmpl.render(
         board_id=thread['boardId'],
         id=thread['threadId'],
-        title=thread['title'],
+        title=html.escape(thread['title']),
         size=thread['size'],
         username=thread['username'],
         created_at=create_date.strftime("%Y-%m-%d (%a) %H:%M:%S"),
@@ -94,7 +95,7 @@ def draw_trace(thread, data_uri=False, body_aa=False):
     tmpl = env.get_template('trace.html.j2')
 
     return tmpl.render(
-        title=thread['title'],
+        title=html.escape(thread['title']),
         thread=draw_thread(thread, data_uri),
         board_id=thread['boardId'],
         thread_id=thread['threadId'],
